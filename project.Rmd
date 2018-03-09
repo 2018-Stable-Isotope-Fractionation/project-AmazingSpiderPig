@@ -1,6 +1,6 @@
 ---
 title: "The Dole Effect"
-author: "Sebastian Kopf"
+author: "Amazing Spider Pig"
 date: "`r format(Sys.Date(), '%d %b %Y')`"
 output:
   html_document: 
@@ -16,26 +16,34 @@ editor_options:
 
 ```{r "load packages", include=FALSE}
 library(tidyverse)
+knitr::opts_chunk$set(eval = FALSE)
 ```
 
 # System
 
-![](system.png)
+```{r out.width = "100%", echo=FALSE, eval=TRUE}
+knitr::include_graphics("system.png") 
+```
+
 
 ## Equations
 
 At steady-state we know the solution:
 
 $$
-\delta_{O2} - \delta_{H2O} = f_m \cdot (\epsilon_{pm} - \epsilon_{rm}) + (1-f_m)\cdot (\epsilon_{meteoric} + \epsilon_{evap} + \epsilon_{pl} - \epsilon_{rl}) + k_{strat}\cdot \epsilon_{ex}
+\delta_{O2} - \delta_{H2O} = f_m \cdot (\epsilon_{pm} - \epsilon_{rm}) + (1-f_m)\cdot (\epsilon_{meteoric} + \epsilon_{evap} + \epsilon_{pl} - \epsilon_{rl}) + m_{strat}\cdot \epsilon_{ex}
 $$
 
 Note: all $\delta$ and $\epsilon$ values are for the fractionation of $^{18}O/^{16}O$. The `Dole Effect` = $\delta_{O2} - \delta_{H2O}$.
 
 ## Parameters
 
- - $f_m$ is the fraction of photosynthsis/respiration happening on land.
-
+ - $f_m$ is the fraction of photosynthesis/respiration happening in the marine hydrosphere (vs. marine + terrestrial).
+ - $m_{strat}$ is the stratospheric flux multiplier (relative to respiratory and photosynthetic fluxes)
+ - $\epsilon_{pm}$ and $\epsilon_{pl}$ indicate the fractionation fractors for marine and terrestrial (land-based) photosynthesis, respectively
+ - $\epsilon_{rm}$ and $\epsilon_{rl}$ indicate the fractionation fractors for marine and terrestrial (land-based) respiration, respectively
+ - $\epsilon_{meteroic}$ is the fractionation of meteoric water
+ - $\epsilon_{evap}$ is the fractionation factor of evapotranspiration
 
 # Information
 
@@ -58,9 +66,18 @@ Note: all $\delta$ and $\epsilon$ values are for the fractionation of $^{18}O/^{
  - exchange with CO2 in the stratosphere leads to the CO2 getting enriched by 11‰ (i.e. the oxygen gets depleted)
  - the mixing ratio of CO2 and O2 in the stratosphere is assumed to be the same as in the trophosphere
 
-### Question: What is an estimate of the relative flux to the stratosphere ($k_{strat}$)?
+### Question: What is an estimate of the relative flux to the stratosphere ($m_{strat}$)?
+
+```{r}
+m_strat <- ?
+```
+
 
 ### Question: What is the effective isotope effect of stratospheric exchange ($\epsilon_{ex}$)?
+
+```{r}
+eps_ex <- ?
+```
 
 
 # Exploring the analytical solution
@@ -73,6 +90,7 @@ Note: all $\delta$ and $\epsilon$ values are for the fractionation of $^{18}O/^{
 #' @param eps_pm photosynthetic fractionation in the oceans 
 #' @param eps_rm respiratory fractionation on land
 #' @param eps_ex fractionation from exchange with CO2 (eps_O2/CO2)
+#' @param eps_evap fractionation from evapotranspiration
 #' @param eps_meteoric fractionation of average meteoric water (relative to ocean)
 #' @param strat_flux_m multiplier of stratospheric flux
 calc_dole_effect <- function(f_m, eps_pm, eps_rm, eps_pl, eps_rl, eps_ex, eps_evap, eps_meteoric, strat_flux_m) {
@@ -84,18 +102,33 @@ p_base <- ggplot() +
   aes(y = dole_effect) +
   geom_hline(yintercept = 23.5, color = "red", size = 3) +
   geom_line(size = 1.5) +
-  scale_y_continuous("Dole effect [\U2030]", expand = c(0,0), limits = c(18, 26)) +
+  scale_y_continuous("Dole effect [\U2030]", expand = c(0,0)) +
   scale_x_continuous(expand = c(0,0)) +
-  theme_bw()
+  theme_bw() +
+  coord_cartesian(ylim = c(18, 26))
 ```
 
-## Exercise 1: calculate the modern dole effect
+## Exercise 1: modern Dole effect
+
+Calculate the modern Dole effect based on ther parameters listed above.
 
 ```{r}
-
+calc_dole_effect(
+  f_m = ?,
+  eps_pm = ?,
+  eps_rm = ?,
+  eps_pl = ?,
+  eps_rl = ?,
+  eps_ex = ?,
+  eps_evap = ?,
+  eps_meteoric = ?,
+  strat_flux_m = ?
+)
 ```
 
-## Exercise 2: how does it change if we vary the evapotranspiration effect from 5 to 20‰?
+## Exercise 2: varying evapotranspiration
+
+How does the Dole effect change if we vary the evapotranspiration effect from 5 to 20‰?
 
 ```{r}
 df1 <- 
@@ -108,7 +141,9 @@ p_base %+% df1 %+% aes(x = eps_evap) +
   labs(x = "isotope effect of evaportranspiration [\U2030]")
 ```
 
-## Exercise 3: how does it change if we vary the flux fraction of the marine pool from 0% to 100%?
+## Exercise 3: varying marine contribution
+
+How does the Dole effect change if we vary the flux fraction of the marine pool from 0% to 100%?
 
 ```{r}
 df2 <- 
@@ -119,13 +154,23 @@ df2 <-
 p_base %+% df2 %+% aes(x = 100 * f_m) + labs(x = "fraction of marine flux [%]")
 ```
 
-## Exercise 4: how about changing either of the respiratory isotope effects from -15 to -22‰?
+## Exercise 4: varying respiratory isotope effects
 
-Again, let's assume that a more realistic evapotranspiration effect is actually 15‰ instead of 8‰.
+How does the Dole effect change if we vary either of the respiratory isotope effects from -15 to -22‰?
 
 
 ```{r}
-
+???
 ```
+
+## Exercise 5: glacial-interglacial time scales
+
+What do you think could explain the variation seen in the Dole Effect over glacial-interglacial time scales? See Figure 1 below from Malaizé, B., D. Paillard, J. Jouzel, and D. Raynaud (1999), *The Dole effect over the last two glacial-interglacial cycles*, J. Geophys. Res., 104(D12), 14199–14208, doi:10.1029/1999JD900116.
+
+```{r out.width = "100%", echo=FALSE, eval=TRUE}
+knitr::include_graphics("malaize_et_al_1999_fig1.png")
+```
+
+
 
 
